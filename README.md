@@ -23,9 +23,7 @@ To build unite messaging system from source code use go get command and copy [un
 > go get -u github.com/unit-io/unite
 
 ## Usage
-The unite messaging system supports publish-subscribe to topic. First register a client id to connect to the unite messaging system and generate keys for topic in order to publish or subscribe to topics. See [usage guide](https://github.com/unit-io/unite/tree/master/docs/usage.md). 
-
-Samples are available in the examples directory for reference.
+The unite messaging system supports publish-subscribe to topic. First register a client id to connect to the unite messaging system and generate keys for topic in order to publish or subscribe to topics.
 
 ## Contributing
 If you'd like to contribute, please fork the repository and use a feature branch. Pull requests are welcome.

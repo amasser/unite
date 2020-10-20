@@ -6,7 +6,7 @@ import (
 	"io"
 
 	"github.com/golang/protobuf/proto"
-	lp "github.com/unit-io/unite/lineprotocol"
+	lp "github.com/unit-io/unite/net/lineprotocol"
 	pbx "github.com/unit-io/unite/proto"
 )
 

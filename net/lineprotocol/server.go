@@ -1,4 +1,4 @@
-package lineprotocol
+package net
 
 import (
 	"crypto/tls"
@@ -19,8 +19,8 @@ type Proto int
 
 const (
 	NONE Proto = iota
-	MQTT
 	GRPC
+	GRPC_WEB
 )
 
 //Handler is a callback which get called when a tcp, websocket connection is established or a grpc stream is established

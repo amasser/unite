@@ -1,4 +1,4 @@
-package lineprotocol
+package net
 
 import (
 	"context"

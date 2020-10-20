@@ -4,7 +4,7 @@ import (
 	"bytes"
 
 	"github.com/golang/protobuf/proto"
-	lp "github.com/unit-io/unite/lineprotocol"
+	lp "github.com/unit-io/unite/net/lineprotocol"
 	pbx "github.com/unit-io/unite/proto"
 )
 
@@ -14,7 +14,7 @@ func encodePublish(p lp.Publish) (bytes.Buffer, error) {
 		MessageID: int32(p.MessageID),
 		Topic:     string(p.Topic),
 		Payload:   string(p.Payload),
-		Qos:       int32(p.Qos),
+		Qos:       int32(p.FixedHeader.Qos),
 	}
 	pkt, err := proto.Marshal(&pub)
 	if err != nil {
@@ -45,7 +45,7 @@ func encodePubrec(p lp.Pubrec) (bytes.Buffer, error) {
 	var msg bytes.Buffer
 	pubrec := pbx.Pubrec{
 		MessageID: int32(p.MessageID),
-		Qos:       int32(p.Qos),
+		Qos:       int32(p.FixedHeader.Qos),
 	}
 	pkt, err := proto.Marshal(&pubrec)
 	if err != nil {
@@ -61,7 +61,7 @@ func encodePubrel(p lp.Pubrel) (bytes.Buffer, error) {
 	var msg bytes.Buffer
 	pubrel := pbx.Pubrel{
 		MessageID: int32(p.MessageID),
-		Qos:       int32(p.Qos),
+		Qos:       int32(p.FixedHeader.Qos),
 	}
 	pkt, err := proto.Marshal(&pubrel)
 	if err != nil {

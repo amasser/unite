@@ -10,9 +10,9 @@ import (
 	"sync"
 	"time"
 
-	lp "github.com/unit-io/unite/lineprotocol"
 	"github.com/unit-io/unite/message"
 	"github.com/unit-io/unite/message/security"
+	lp "github.com/unit-io/unite/net/lineprotocol"
 	"github.com/unit-io/unite/net/listener"
 	rh "github.com/unit-io/unite/pkg/hash"
 	"github.com/unit-io/unite/pkg/log"

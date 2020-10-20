@@ -9,8 +9,8 @@ import (
 	"time"
 
 	adapter "github.com/unit-io/unite/db"
-	lp "github.com/unit-io/unite/lineprotocol"
 	"github.com/unit-io/unite/message"
+	net "github.com/unit-io/unite/net/lineprotocol"
 	"github.com/unit-io/unite/pkg/log"
 )
 
@@ -159,6 +159,7 @@ func (m *MessageStore) Get(contract uint32, topic []byte) (matches []message.Mes
 		msg := message.Message{
 			Topic:   topic,
 			Payload: payload,
+			Qos:     0, // TODO implement logic to set and get Qos from store.
 		}
 		matches = append(matches, msg)
 	}
@@ -197,11 +198,11 @@ func InitMessageStore(ctx context.Context, reset bool) error {
 }
 
 // PersistOutbound handles which outgoing messages are stored
-func (l *MessageLog) PersistOutbound(proto lp.ProtoAdapter, blockId, key uint64, msg lp.Packet) {
+func (l *MessageLog) PersistOutbound(proto net.ProtoAdapter, blockId, key uint64, msg net.Packet) {
 	switch msg.Info().Qos {
 	case 0:
 		switch msg.(type) {
-		case *lp.Puback, *lp.Pubcomp:
+		case *net.Puback, *net.Pubcomp:
 			// Sending puback. delete matching publish
 			// from ibound
 			adp.DeleteMessage(blockId, key)
@@ -209,10 +210,10 @@ func (l *MessageLog) PersistOutbound(proto lp.ProtoAdapter, blockId, key uint64,
 		}
 	case 1:
 		switch msg.(type) {
-		case *lp.Publish, *lp.Pubrel, *lp.Subscribe, *lp.Unsubscribe:
+		case *net.Publish, *net.Pubrel, *net.Subscribe, *net.Unsubscribe:
 			// Sending publish. store in obound
 			// until puback received
-			m, err := lp.Encode(proto, msg)
+			m, err := net.Encode(proto, msg)
 			if err != nil {
 				log.ErrLogger.Err(err).Str("context", "store.PersistOutbound")
 				return
@@ -223,10 +224,10 @@ func (l *MessageLog) PersistOutbound(proto lp.ProtoAdapter, blockId, key uint64,
 		}
 	case 2:
 		switch msg.(type) {
-		case *lp.Publish:
+		case *net.Publish:
 			// Sending publish. store in obound
 			// until pubrel received
-			m, err := lp.Encode(proto, msg)
+			m, err := net.Encode(proto, msg)
 			if err != nil {
 				log.ErrLogger.Err(err).Str("context", "store.PersistOutbound")
 				return
@@ -239,24 +240,24 @@ func (l *MessageLog) PersistOutbound(proto lp.ProtoAdapter, blockId, key uint64,
 }
 
 // PersistInbound handles which incoming messages are stored
-func (l *MessageLog) PersistInbound(proto lp.ProtoAdapter, blockId, key uint64, msg lp.Packet) {
+func (l *MessageLog) PersistInbound(proto net.ProtoAdapter, blockId, key uint64, msg net.Packet) {
 	switch msg.Info().Qos {
 	case 0:
 		switch msg.(type) {
-		case *lp.Puback, *lp.Suback, *lp.Unsuback, *lp.Pubcomp:
+		case *net.Puback, *net.Suback, *net.Unsuback, *net.Pubcomp:
 			// Received a puback. delete matching publish
 			// from obound
 			adp.DeleteMessage(blockId, key)
 			adp.Append(true, key, nil)
-		case *lp.Publish, *lp.Pubrec, *lp.Connack:
+		case *net.Publish, *net.Pubrec, *net.Connack:
 		default:
 		}
 	case 1:
 		switch msg.(type) {
-		case *lp.Publish, *lp.Pubrel:
+		case *net.Publish, *net.Pubrel:
 			// Received a publish. store it in ibound
 			// until puback sent
-			m, err := lp.Encode(proto, msg)
+			m, err := net.Encode(proto, msg)
 			if err != nil {
 				log.ErrLogger.Err(err).Str("context", "store.PersistOutbound")
 				return
@@ -267,10 +268,10 @@ func (l *MessageLog) PersistInbound(proto lp.ProtoAdapter, blockId, key uint64, 
 		}
 	case 2:
 		switch msg.(type) {
-		case *lp.Publish:
+		case *net.Publish:
 			// Received a publish. store it in ibound
 			// until pubrel received
-			m, err := lp.Encode(proto, msg)
+			m, err := net.Encode(proto, msg)
 			if err != nil {
 				log.ErrLogger.Err(err).Str("context", "store.PersistOutbound")
 				return
@@ -283,11 +284,11 @@ func (l *MessageLog) PersistInbound(proto lp.ProtoAdapter, blockId, key uint64, 
 }
 
 // Get performs a query and attempts to fetch message for the given blockId and key
-func (l *MessageLog) Get(proto lp.ProtoAdapter, key uint64) lp.Packet {
+func (l *MessageLog) Get(proto net.ProtoAdapter, key uint64) net.Packet {
 	blockId := key & 0xFFFFFFFF
 	if raw, err := adp.GetMessage(blockId, key); raw != nil && err == nil {
 		r := bytes.NewReader(raw)
-		if msg, err := lp.ReadPacket(proto, r); err == nil {
+		if msg, err := net.ReadPacket(proto, r); err == nil {
 			return msg
 		}
 

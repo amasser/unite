@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/unit-io/unite/config"
-	lp "github.com/unit-io/unite/lineprotocol"
+	lp "github.com/unit-io/unite/net/lineprotocol"
 	"github.com/unit-io/unite/net/listener"
 	"github.com/unit-io/unite/pkg/crypto"
 	"github.com/unit-io/unite/pkg/log"

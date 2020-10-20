@@ -10,11 +10,10 @@ import (
 	"sync"
 	"time"
 
-	lp "github.com/unit-io/unite/lineprotocol"
-	"github.com/unit-io/unite/lineprotocol/grpc"
-	"github.com/unit-io/unite/lineprotocol/mqtt"
 	"github.com/unit-io/unite/message"
 	"github.com/unit-io/unite/message/security"
+	lp "github.com/unit-io/unite/net/lineprotocol"
+	"github.com/unit-io/unite/net/lineprotocol/grpc"
 	"github.com/unit-io/unite/pkg/log"
 	"github.com/unit-io/unite/pkg/uid"
 	"github.com/unit-io/unite/store"
@@ -52,9 +51,9 @@ type Conn struct {
 func (s *Service) newConn(t net.Conn, proto lp.Proto) *Conn {
 	var lineProto lp.ProtoAdapter
 	switch proto {
-	case lp.MQTT:
-		lineProto = &mqtt.LineProto{}
 	case lp.GRPC:
+		lineProto = &grpc.LineProto{}
+	case lp.GRPC_WEB:
 		lineProto = &grpc.LineProto{}
 	}
 

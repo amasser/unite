@@ -1,4 +1,4 @@
-package lineprotocol
+package net
 
 import (
 	"bytes"
@@ -191,7 +191,7 @@ func Encode(adp ProtoAdapter, pkt Packet) (bytes.Buffer, error) {
 	return adp.Encode(pkt)
 }
 
-// Type returns the MQTT packet type.
+// Type returns the Connect packet type.
 func (c *Connect) Type() uint8 {
 	return CONNECT
 }
@@ -201,7 +201,7 @@ func (c *Connect) Info() Info {
 	return Info{Qos: 0, MessageID: 0}
 }
 
-// Type returns the MQTT packet type.
+// Type returns the Connack packet type.
 func (c *Connack) Type() uint8 {
 	return CONNACK
 }
@@ -211,7 +211,7 @@ func (c *Connack) Info() Info {
 	return Info{Qos: 0, MessageID: 0}
 }
 
-// Type returns the MQTT packet type.
+// Type returns the Pingreq packet type.
 func (p *Pingreq) Type() uint8 {
 	return PINGREQ
 }
@@ -221,7 +221,7 @@ func (p *Pingreq) Info() Info {
 	return Info{Qos: 0, MessageID: 0}
 }
 
-// Type returns the MQTT packet type.
+// Type returns the Pingresp packet type.
 func (p *Pingresp) Type() uint8 {
 	return PINGRESP
 }
@@ -231,7 +231,7 @@ func (p *Pingresp) Info() Info {
 	return Info{Qos: 0, MessageID: 0}
 }
 
-// Type returns the MQTT packet type.
+// Type returns the Disconnect packet type.
 func (d *Disconnect) Type() uint8 {
 	return DISCONNECT
 }
@@ -241,7 +241,7 @@ func (d *Disconnect) Info() Info {
 	return Info{Qos: 0, MessageID: 0}
 }
 
-// Type returns the MQTT Packet type.
+// Type returns the Publish Packet type.
 func (p *Publish) Type() uint8 {
 	return PUBLISH
 }
@@ -251,7 +251,7 @@ func (p *Publish) Info() Info {
 	return Info{Qos: p.Qos, MessageID: p.MessageID}
 }
 
-// Type returns the MQTT Packet type.
+// Type returns the Puback Packet type.
 func (p *Puback) Type() uint8 {
 	return PUBACK
 }
@@ -261,7 +261,7 @@ func (p *Puback) Info() Info {
 	return Info{Qos: 0, MessageID: p.MessageID}
 }
 
-// Type returns the MQTT Packet type.
+// Type returns the Pubrec Packet type.
 func (p *Pubrec) Type() uint8 {
 	return PUBREC
 }
@@ -271,7 +271,7 @@ func (p *Pubrec) Info() Info {
 	return Info{Qos: p.Qos, MessageID: p.MessageID}
 }
 
-// Type returns the MQTT Packet type.
+// Type returns the Pubrel Packet type.
 func (p *Pubrel) Type() uint8 {
 	return PUBREL
 }
@@ -281,7 +281,7 @@ func (p *Pubrel) Info() Info {
 	return Info{Qos: p.Qos, MessageID: p.MessageID}
 }
 
-// Type returns the MQTT Packet type.
+// Type returns the Pubcomp Packet type.
 func (p *Pubcomp) Type() uint8 {
 	return PUBCOMP
 }
@@ -291,7 +291,7 @@ func (p *Pubcomp) Info() Info {
 	return Info{Qos: 0, MessageID: p.MessageID}
 }
 
-// Type returns the MQTT Packet type.
+// Type returns the Subscribe Packet type.
 func (s *Subscribe) Type() uint8 {
 	return SUBSCRIBE
 }
@@ -301,7 +301,7 @@ func (s *Subscribe) Info() Info {
 	return Info{Qos: 1, MessageID: s.MessageID}
 }
 
-// Type returns the MQTT Packet type.
+// Type returns the Suback Packet type.
 func (s *Suback) Type() uint8 {
 	return SUBACK
 }
@@ -311,7 +311,7 @@ func (s *Suback) Info() Info {
 	return Info{Qos: 0, MessageID: s.MessageID}
 }
 
-// Type returns the MQTT Packet type.
+// Type returns the Unsubscribe Packet type.
 func (u *Unsubscribe) Type() uint8 {
 	return UNSUBSCRIBE
 }
@@ -321,7 +321,7 @@ func (u *Unsubscribe) Info() Info {
 	return Info{Qos: 1, MessageID: u.MessageID}
 }
 
-// Type returns the MQTT Packet type.
+// Type returns the Unsuback Packet type.
 func (u *Unsuback) Type() uint8 {
 	return UNSUBACK
 }

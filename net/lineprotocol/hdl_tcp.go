@@ -1,4 +1,4 @@
-package lineprotocol
+package net
 
 import (
 	"net"
@@ -51,6 +51,6 @@ func (s *TcpServer) Serve(list net.Listener) error {
 		}
 
 		tempDelay = 0
-		go s.Handler(conn, MQTT)
+		go s.Handler(conn, GRPC)
 	}
 }

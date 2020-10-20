@@ -100,6 +100,7 @@ func (c *Conn) Write(p []byte) (int, error) {
 
 	total := len(p)
 	for {
+
 		// Encode our data into the request. Any error means we abort.
 		n, err := c.Encode(c.OutMsg, p)
 		if err != nil {
@@ -113,6 +114,7 @@ func (c *Conn) Write(p []byte) (int, error) {
 
 		// Send our message. Any error we also just abort out.
 		err = c.Stream.SendMsg(c.OutMsg)
+
 		if c.WriteLock != nil {
 			c.WriteLock.Unlock()
 		}

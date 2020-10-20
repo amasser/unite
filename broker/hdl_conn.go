@@ -4,11 +4,12 @@ import (
 	"bufio"
 	"context"
 	"encoding/json"
+	"fmt"
 	"time"
 
-	lp "github.com/unit-io/unite/lineprotocol"
 	"github.com/unit-io/unite/message"
 	"github.com/unit-io/unite/message/security"
+	lp "github.com/unit-io/unite/net/lineprotocol"
 	"github.com/unit-io/unite/pkg/crypto"
 	"github.com/unit-io/unite/pkg/log"
 	"github.com/unit-io/unite/pkg/stats"
@@ -37,6 +38,7 @@ func (c *Conn) readLoop() error {
 		// Decode an incoming packet
 		pkt, err := lp.ReadPacket(c.proto, reader)
 		if err != nil {
+			fmt.Println("readPacket: err", err)
 			return err
 		}
 

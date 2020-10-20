@@ -1,4 +1,4 @@
-package lineprotocol
+package net
 
 import (
 	"io"
@@ -59,7 +59,7 @@ const (
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
-	Subprotocols:    []string{"mqttv3.1", "mqttv3", "mqtt"},
+	Subprotocols:    []string{"grpc_web"},
 }
 
 func (s *HttpServer) HandleFunc(w http.ResponseWriter, r *http.Request) {
@@ -77,7 +77,7 @@ func (s *HttpServer) HandleFunc(w http.ResponseWriter, r *http.Request) {
 		return nil
 	})
 
-	go s.Handler(newConn(ws), MQTT)
+	go s.Handler(newConn(ws), GRPC_WEB)
 }
 
 func (s *HttpServer) Serve(list net.Listener) error {
