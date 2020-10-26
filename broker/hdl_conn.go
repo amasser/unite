@@ -90,8 +90,7 @@ func (c *Conn) handler(pkt lp.Packet) error {
 		if !packet.CleanSessFlag {
 			c.resume()
 		} else {
-			// contract is used as blockId and key prefix
-			store.Log.Reset(c.clientid.Contract())
+			store.Log.Reset()
 		}
 
 	// An attempt to subscribe to a topic.
@@ -378,7 +377,7 @@ func (c *Conn) ack(pkt lp.Publish) *types.Error {
 // Load all stored messages and resend them to ensure QOS > 1,2 even after an application crash.
 func (c *Conn) resume() {
 	// contract is used as blockId and key prefix
-	keys := store.Log.Keys(c.clientid.Contract())
+	keys := store.Log.Keys()
 	for _, k := range keys {
 		msg := store.Log.Get(c.proto, k)
 		if msg == nil {

@@ -2,11 +2,8 @@ package store
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
-	"time"
 
 	adapter "github.com/unit-io/unite/db"
 	"github.com/unit-io/unite/message"
@@ -27,7 +24,7 @@ type configType struct {
 	Adapters map[string]json.RawMessage `json:"adapters"`
 }
 
-func openAdapter(jsonconf string) error {
+func openAdapter(jsonconf string, reset bool) error {
 	var config configType
 	if err := json.Unmarshal([]byte(jsonconf), &config); err != nil {
 		return errors.New("store: failed to parse config: " + err.Error() + "(" + jsonconf + ")")
@@ -46,14 +43,14 @@ func openAdapter(jsonconf string) error {
 		adapterConfig = string(config.Adapters[adp.GetName()])
 	}
 
-	return adp.Open(adapterConfig)
+	return adp.Open(adapterConfig, reset)
 }
 
 // Open initializes the persistence system. Adapter holds a connection pool for a database instance.
 // 	 name - name of the adapter rquested in the config file
 //   jsonconf - configuration string
-func Open(jsonconf string) error {
-	if err := openAdapter(jsonconf); err != nil {
+func Open(jsonconf string, reset bool) error {
+	if err := openAdapter(jsonconf, reset); err != nil {
 		return err
 	}
 
@@ -91,7 +88,7 @@ func GetAdapterName() string {
 // If it's non-nil, it will use the config string to open the DB connection first.
 func InitDb(jsonconf string, reset bool) error {
 	if !IsOpen() {
-		if err := openAdapter(jsonconf); err != nil {
+		if err := openAdapter(jsonconf, reset); err != nil {
 			return err
 		}
 	}
@@ -173,40 +170,15 @@ type MessageLog struct{}
 // Log is the anchor for storing/retrieving Message objects
 var Log MessageLog
 
-func recovery(reset bool) error {
-	m, err := adp.Recovery(reset)
-	if err != nil {
-		return err
-	}
-	for k, msg := range m {
-		blockId := k & 0xFFFFFFFF
-		if err := adp.PutMessage(blockId, k, msg); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-// InitMessageStore init message store and start recovery if reset flag is not set.
-func InitMessageStore(ctx context.Context, reset bool) error {
-	if err := recovery(reset); err != nil {
-		return err
-	}
-
-	writeLoop(ctx, 15*time.Millisecond)
-	return nil
-}
-
 // PersistOutbound handles which outgoing messages are stored
-func (l *MessageLog) PersistOutbound(proto net.ProtoAdapter, blockId, key uint64, msg net.Packet) {
+func (l *MessageLog) PersistOutbound(proto net.ProtoAdapter, key uint64, msg net.Packet) {
 	switch msg.Info().Qos {
 	case 0:
 		switch msg.(type) {
 		case *net.Puback, *net.Pubcomp:
 			// Sending puback. delete matching publish
 			// from ibound
-			adp.DeleteMessage(blockId, key)
-			adp.Append(true, key, nil)
+			adp.DeleteMessage(key)
 		}
 	case 1:
 		switch msg.(type) {
@@ -218,8 +190,7 @@ func (l *MessageLog) PersistOutbound(proto net.ProtoAdapter, blockId, key uint64
 				log.ErrLogger.Err(err).Str("context", "store.PersistOutbound")
 				return
 			}
-			adp.PutMessage(blockId, key, m.Bytes())
-			adp.Append(false, key, m.Bytes())
+			adp.PutMessage(key, m.Bytes())
 		default:
 		}
 	case 2:
@@ -232,23 +203,21 @@ func (l *MessageLog) PersistOutbound(proto net.ProtoAdapter, blockId, key uint64
 				log.ErrLogger.Err(err).Str("context", "store.PersistOutbound")
 				return
 			}
-			adp.PutMessage(blockId, key, m.Bytes())
-			adp.Append(false, key, m.Bytes())
+			adp.PutMessage(key, m.Bytes())
 		default:
 		}
 	}
 }
 
 // PersistInbound handles which incoming messages are stored
-func (l *MessageLog) PersistInbound(proto net.ProtoAdapter, blockId, key uint64, msg net.Packet) {
+func (l *MessageLog) PersistInbound(proto net.ProtoAdapter, key uint64, msg net.Packet) {
 	switch msg.Info().Qos {
 	case 0:
 		switch msg.(type) {
 		case *net.Puback, *net.Suback, *net.Unsuback, *net.Pubcomp:
 			// Received a puback. delete matching publish
 			// from obound
-			adp.DeleteMessage(blockId, key)
-			adp.Append(true, key, nil)
+			adp.DeleteMessage(key)
 		case *net.Publish, *net.Pubrec, *net.Connack:
 		default:
 		}
@@ -262,8 +231,7 @@ func (l *MessageLog) PersistInbound(proto net.ProtoAdapter, blockId, key uint64,
 				log.ErrLogger.Err(err).Str("context", "store.PersistOutbound")
 				return
 			}
-			adp.PutMessage(blockId, key, m.Bytes())
-			adp.Append(false, key, m.Bytes())
+			adp.PutMessage(key, m.Bytes())
 		default:
 		}
 	case 2:
@@ -276,8 +244,7 @@ func (l *MessageLog) PersistInbound(proto net.ProtoAdapter, blockId, key uint64,
 				log.ErrLogger.Err(err).Str("context", "store.PersistOutbound")
 				return
 			}
-			adp.PutMessage(blockId, key, m.Bytes())
-			adp.Append(false, key, m.Bytes())
+			adp.PutMessage(key, m.Bytes())
 		default:
 		}
 	}
@@ -285,8 +252,7 @@ func (l *MessageLog) PersistInbound(proto net.ProtoAdapter, blockId, key uint64,
 
 // Get performs a query and attempts to fetch message for the given blockId and key
 func (l *MessageLog) Get(proto net.ProtoAdapter, key uint64) net.Packet {
-	blockId := key & 0xFFFFFFFF
-	if raw, err := adp.GetMessage(blockId, key); raw != nil && err == nil {
+	if raw, err := adp.GetMessage(key); raw != nil && err == nil {
 		r := bytes.NewReader(raw)
 		if msg, err := net.ReadPacket(proto, r); err == nil {
 			return msg
@@ -297,54 +263,19 @@ func (l *MessageLog) Get(proto net.ProtoAdapter, key uint64) net.Packet {
 }
 
 // Keys performs a query and attempts to fetch all keys for given blockId and key prefix.
-func (l *MessageLog) Keys(prefix uint32) []uint64 {
-	matches := make([]uint64, 0)
-	keys := adp.Keys(uint64(prefix))
-	for _, k := range keys {
-		if evalPrefix(k, prefix) {
-			matches = append(matches, k)
-		}
-	}
-	return matches
+func (l *MessageLog) Keys() []uint64 {
+	return adp.Keys()
 }
 
 // Delete is used to delete message.
 func (l *MessageLog) Delete(key uint64) {
-	blockId := key & 0xFFFFFFFF
-	adp.DeleteMessage(blockId, key)
-	adp.Append(true, key, nil)
+	adp.DeleteMessage(key)
 }
 
-// Reset removes all keys from store for the given blockId and key prefix
-func (l *MessageLog) Reset(prefix uint32) {
-	keys := adp.Keys(uint64(prefix))
-	for _, k := range keys {
-		if evalPrefix(k, prefix) {
-			adp.DeleteMessage(uint64(prefix), k)
-		}
+// Reset removes all keys from store
+func (l *MessageLog) Reset() {
+	keys := adp.Keys()
+	for _, key := range keys {
+		adp.DeleteMessage(key)
 	}
-}
-
-// writeLoop handles writing to log file.
-func writeLoop(ctx context.Context, interval time.Duration) {
-	go func() {
-		tinyBatchWriterTicker := time.NewTicker(interval)
-		defer func() {
-			tinyBatchWriterTicker.Stop()
-		}()
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case <-tinyBatchWriterTicker.C:
-				if err := adp.Write(); err != nil {
-					fmt.Println("Error committing tinyBatch")
-				}
-			}
-		}
-	}()
-}
-
-func evalPrefix(key uint64, prefix uint32) bool {
-	return uint64(prefix) == key&0xFFFFFFFF
 }

@@ -14,7 +14,7 @@ type Adapter interface {
 	// General
 
 	// Open and configure the adapter
-	Open(config string) error
+	Open(config string, reset bool) error
 	// Close the adapter
 	Close() error
 	// IsOpen checks if the adapter is ready for use
@@ -49,26 +49,17 @@ type Adapter interface {
 	// it returns an error if some error was encountered during delete.
 	Delete(contract uint32, messageId, topic []byte) error
 
-	// Append appends message to the buffer.
-	Append(delFlag bool, k uint64, data []byte) error
-
 	// PutMessage is used to store a message.
 	// it returns an error if some error was encountered during storage.
-	PutMessage(blockId, key uint64, payload []byte) error
+	PutMessage(key uint64, payload []byte) error
 
-	// GetMessage performs a query and attempts to fetch message for the given blockId and key
-	GetMessage(blockId, key uint64) ([]byte, error)
-
-	// Keys performs a query and attempts to fetch all keys for given blockId.
-	Keys(blockId uint64) []uint64
+	// GetMessage performs a query and attempts to fetch message for the given key
+	GetMessage(key uint64) ([]byte, error)
 
 	// DeleteMessage is used to delete message.
 	// it returns an error if some error was encountered during delete.
-	DeleteMessage(blockId, key uint64) error
+	DeleteMessage(key uint64) error
 
-	// Write writes message to log file, and also release older messages from log for the duration.
-	Write() error
-
-	// Recovery loads pending messages from log file into store
-	Recovery(reset bool) (map[uint64][]byte, error)
+	// Keys performs a query and attempts to fetch all keys.
+	Keys() []uint64
 }

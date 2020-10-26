@@ -291,7 +291,7 @@ func (c *Conn) storeInbound(m lp.Packet) {
 		blockId := uint64(c.clientid.Contract())
 		k := uint64(c.inboundID(m.Info().MessageID))<<32 + blockId
 		fmt.Println("inbound: type, key, qos", m.Type(), k, m.Info().Qos)
-		store.Log.PersistInbound(c.proto, blockId, k, m)
+		store.Log.PersistInbound(c.proto, k, m)
 	}
 }
 
@@ -300,7 +300,7 @@ func (c *Conn) storeOutbound(m lp.Packet) {
 		blockId := uint64(c.clientid.Contract())
 		k := uint64(c.inboundID(m.Info().MessageID))<<32 + blockId
 		fmt.Println("inbound: type, key, qos", m.Type(), k, m.Info().Qos)
-		store.Log.PersistOutbound(c.proto, blockId, k, m)
+		store.Log.PersistOutbound(c.proto, k, m)
 	}
 }
 
